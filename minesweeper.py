@@ -53,29 +53,29 @@ class Cube(Entity):
         )
         self.id = id
         self.is_flagged = False
-        
+        self.is_revealed = False
+
     def reveal(self):
-        """Mostra il numero di mine adiacenti o avvia il flood fill se è 0"""
         if self.is_flagged:
-            return  # Se il cubo è flaggato, non fare nulla
+            return
 
         x, y, z = map(int, self.id.split('_'))
         count = 0
-        
-        # Conta il numero di mine nei blocchi adiacenti
+
+        self.is_revealed = True
+
         for i in range(x - 1, x + 2):
             for j in range(y - 1, y + 2):
                 for k in range(z - 1, z + 2):
                     if (i, j, k) == (x, y, z):
-                        continue  # Evita di contare se stesso
+                        continue
 
                     cube = cubes_dict.get((i, j, k))
                     if cube and cube.is_mine:
                         count += 1
 
-        # Se ci sono mine vicine, mostra il numero e termina
         if count > 0:
-            Text(
+            self.text_entity = Text(
                 text=str(count),
                 position=self.position,
                 scale=side * 20,
@@ -87,20 +87,27 @@ class Cube(Entity):
             flood_fill(x, y, z)
 
         if DEBUG:
-            print(f'Clicked {self.id}, Mines around: {count}, Is mine: {self.is_mine}')
-        
+            print(f'Clicked {self.id}, Mines around: {count}, Is mine: {self.is_mine}, Revealed {self.is_revealed}')
+
         destroy(self)
 
     def on_click(self):
-        """Gestisce il click su un cubo"""
         global global_flag_mode
-        
+
         if global_flag_mode:
             self.is_flagged = not self.is_flagged
             self.color = color.red if self.is_flagged else color.white
+
+            for cube in cubes_dict.values():
+                if cube.is_revealed and hasattr(cube, 'text_entity'):
+                    count = int(cube.text_entity.text)
+                    if self.is_flagged:  # Se è stato piazzato un flag, riduci di uno il numero
+                        cube.text_entity.text = str(count - 1)
+                    else:  # Se il flag è stato rimosso, aumenta di uno il numero
+                        cube.text_entity.text = str(count + 1)
+
         else:
             self.reveal()
-
 
 def input(key):
     global global_flag_mode
@@ -110,7 +117,6 @@ def input(key):
         print(f'Modalità flag: {global_flag_mode}')
 
 def flood_fill(x, y, z):
-    """Espande la rivelazione dei blocchi vicini usando Flood Fill"""
     stack = [(x, y, z)]
     visited = set()
 
@@ -122,10 +128,14 @@ def flood_fill(x, y, z):
         visited.add((cx, cy, cz))
 
         cube = cubes_dict.get((cx, cy, cz))
-        if not cube or cube.is_mine:
-            continue  # Se è una mina o non esiste, non si propaga
 
-        # Conta le mine intorno
+        cube.is_revealed = True
+
+        print(f'Popped {cube.id}, Revealed {cube.is_revealed}')
+
+        if not cube or cube.is_mine:
+            continue
+
         count = 0
         for i in range(cx - 1, cx + 2):
             for j in range(cy - 1, cy + 2):
@@ -137,9 +147,8 @@ def flood_fill(x, y, z):
                     if neighbor and neighbor.is_mine:
                         count += 1
 
-        # Se ci sono mine, mostra il numero e non espandere
         if count > 0:
-            Text(
+            cube.text_entity = Text(
                 text=str(count),
                 position=cube.position,
                 scale=side * 20,
@@ -147,7 +156,6 @@ def flood_fill(x, y, z):
                 billboard=True
             )
         else:
-            # Se il blocco è 0, continua l'espansione nei vicini
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
                     for dz in [-1, 0, 1]:
@@ -159,11 +167,7 @@ def flood_fill(x, y, z):
 
         destroy(cube)
 
-## Inizializzazione
-
 if __name__ == '__main__':
-
-    # Creazione del pivot e della camera
 
     pivot = Entity(
         position=(center,center,center),
@@ -172,9 +176,6 @@ if __name__ == '__main__':
     camera.parent = pivot
     camera.position = (center, 20, center) 
     camera.look_at(pivot)
-    
-    
-    # Creazione dei cubi
 
     cubes_dict = {}
 
@@ -187,14 +188,9 @@ if __name__ == '__main__':
                 )
                 cubes_dict[(x, y, z)] = cube
 
-    # Posizionamento delle mine
-
     for _ in range(int(mines)):
         cube = cubes_dict.get((randrange(dim), randrange(dim), randrange(dim)))
         cube.is_mine = True
-    
-    
-    # Controlli della camera
 
     def update():
         if held_keys['w']:
