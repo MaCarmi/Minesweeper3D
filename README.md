@@ -5,10 +5,12 @@ We created a cube made up by NxN cubes. Each cube is an entity that is flagged w
 The mines are generated randomly but the quantity depends on the difficulty of the game, we used the parameters {easy : 0.1, medium : 0.15, hard : 0.2, extreme : 0.3} that is multiplied by the 3 dimensions.
 
 The game use the "flood fill" algorithm which destroys every cube that doesn't have any mines in the vicinity. 
-We created a flag mode, activable by a button on screen or by pressing the space bar, in this mode, every time a cube is clicked it become red. 
+We created a flag mode, activable by a button on screen or by pressing the space bar, in this mode, every time a cube is clicked it becomes red and considered flagged, while in this state, a cube cannot be removed. When re-clicked on a cube it becomes unflagged and becomes white, in this state the cube can be removed. 
+
+Every time a cube is flagged, all the numbers in the vicinity are decreased by one. \
 
 ## TO BE ADDED ## 
-Every time a cube is flagged, all the numbers in the vicinity are decreased by one. \
+
 Button "Resolve" that, thanks to Z3 - SAT solver solves the current minesweeper game. Looking forward to add the possibility to get some hints to resolve the game partially.
 
 ## TO BE IMPROVED ##
