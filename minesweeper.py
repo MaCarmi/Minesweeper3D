@@ -93,6 +93,7 @@ class Cube(Entity):
                 billboard=True,
                 color=color.white
             )
+            self.initial_value = count
         else:
             flood_fill(x, y, z)
 
@@ -103,7 +104,7 @@ class Cube(Entity):
 
         self.disable()
     
-    # Funzione per creare una lista di cubi adiacenti 
+     
     def get_neighbors(self):
         x, y, z = map(int, self.id.split('_'))
         neighbors = []
@@ -128,18 +129,20 @@ class Cube(Entity):
             self.color = color.red if self.is_flagged else color.white
             
             
-                # Cicla solo sui vicini rivelati
+                
             for cube in self.get_neighbors():
                 if cube.is_revealed and hasattr(cube, 'text_entity'):
                     count = int(cube.text_entity.text)
                     print(cube.text_entity.text)
                     
-                    if self.is_flagged:  # Se è stato piazzato un flag
-                        if count > 0:  # Riduci il numero solo se è maggiore di 0
+                    if self.is_flagged:  
+                        if count > 0:  
                                 cube.text_entity.text = str(count - 1)
                         
-                    else:  # Se il flag è stato rimosso
-                        cube.text_entity.text = str(count + 1)  # Aumenta sempre il numero
+                    else:  
+                        if count < cube.initial_value:
+                            cube.text_entity.text = str(count + 1)
+                        
 
 
         else:
@@ -230,6 +233,8 @@ if __name__ == '__main__':
         cube.is_mine = True
 
     def update():
+        
+        ## MOVIMENTO WASD
         if held_keys['w']:
             camera.position += camera.up * time.dt * 50
         if held_keys['s']:
@@ -245,6 +250,7 @@ if __name__ == '__main__':
         if held_keys['down arrow']:
             camera.world_position -= camera.forward * zoom_speed
 
+        # Mantiene la telecamera rivolta al centro
         camera.look_at(pivot)
 
     app.run()
