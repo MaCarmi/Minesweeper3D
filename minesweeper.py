@@ -23,20 +23,22 @@ window.color = color.black
 
 ## Variabili globali
 
-dim  = 8
+dim  = 7
 side = 0.5
 gap  = 0.08
 
+revealed_cubes = []
+not_revealed_cubes = []
+
 colors = {
-    1: color.blue,
-    2: color.green,
-    3: color.yellow,
-    4: color.orange,
-    5: color.cyan,
-    6: color.magenta,
+    1: color.green,
+    2: color.yellow,
+    3: color.orange,
+    4: color.cyan,
+    5: color.magenta,
 }
 
-rand_color = randint(1,6)
+rand_color = randint(1,5)
 
 
 difficulty = {
@@ -80,10 +82,24 @@ class Cube(Entity):
         self.is_flagged = False
         self.is_revealed = False
 
+
+        #Creiamo comunque text_entity per ogni cubo, anche se quest'ultimo è vuoto 
+        self.text_entity = Text(
+            text='',
+            position=self.position,
+            parent=self,
+            scale=0.1,
+            visible=False
+        )
+
+      
+
     def reveal(self):
         if self.is_flagged:
             return
 
+
+        
         x, y, z = map(int, self.id.split('_'))
         count = 0
 
@@ -112,9 +128,8 @@ class Cube(Entity):
         else:
             flood_fill(x, y, z)
 
-        if DEBUG:
+        if not DEBUG:
             print(f'Clicked {self.id}, Mines around: {count}, Is mine: {self.is_mine}, Revealed {self.is_revealed}')
-
 
 
         self.disable()
@@ -163,6 +178,24 @@ class Cube(Entity):
         else:
             self.reveal()
 
+def get_revealed_cubes():
+        global revealed_cubes  
+        revealed_cubes.clear() 
+
+        for cube in cubes_dict.values():
+            if cube.is_revealed:
+                revealed_cubes.append((cube.id, cube.text_entity.text))
+        return revealed_cubes 
+
+def get_not_revealed_cubes():
+        global not_revealed_cubes  
+        not_revealed_cubes.clear() 
+
+        for cube in cubes_dict.values():
+            if not cube.is_revealed:
+                not_revealed_cubes.append((cube.id))
+        return not_revealed_cubes 
+
 def input(key):
     global global_flag_mode
     if key == 'space':
@@ -185,7 +218,8 @@ def flood_fill(x, y, z):
 
         cube.is_revealed = True
 
-        print(f'Popped {cube.id}, Revealed {cube.is_revealed}')
+        if not DEBUG:
+            print(f'Popped {cube.id}, Revealed {cube.is_revealed}')
 
         if not cube or cube.is_mine:
             continue
@@ -221,6 +255,11 @@ def flood_fill(x, y, z):
 
         if cube:
             cube.disable()
+
+
+
+    
+
 
 if __name__ == '__main__':
 
